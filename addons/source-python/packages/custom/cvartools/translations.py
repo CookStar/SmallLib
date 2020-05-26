@@ -13,4 +13,4 @@ from translations.strings import LangStrings
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-cvartools_strings = LangStrings("CvarTools/strings")
+cvartools_strings = LangStrings("cvartools/strings")
