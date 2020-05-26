@@ -21,9 +21,10 @@ from listeners import OnQueryCvarValueFinished
 class CvarQuery(WeakAutoUnload):
     _cvar_queries = {}
 
-    def __init__(self, edict, callback, cvar_name, cvar_value=None):
+    def __init__(self, edict, callback, cvar_name, cvar_value=None, **kwargs):
         self.callback = callback
         self.cvar_value = cvar_value
+        self.kwargs = kwargs
 
         self.cookie = engine_server.start_query_cvar_value(edict, cvar_name)
         if self.cookie < 0:
@@ -44,8 +45,10 @@ class CvarQuery(WeakAutoUnload):
             return
 
         cvar_query = CvarQuery._cvar_queries.pop(cookie)
-        if cvar_query.cvar_value is not None:
-            if cvar_value != str(cvar_query.cvar_value):
-                cvar_query.callback(index, cvar_name, cvar_value)
+        if cvar_query.cvar_value is not None and cvar_value == str(cvar_query.cvar_value):
+            return
+
+        if cvar_query.kwargs:
+            cvar_query.callback(index, cvar_name, cvar_value, **cvar_query.kwargs)
         else:
             cvar_query.callback(index, cvar_name, cvar_value)

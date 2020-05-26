@@ -47,9 +47,9 @@ class CvarChecker(AutoUnload, set):
         self.clear()
 
     def restore(self):
-        self.clear()
         for player in PlayerIter("human"):
             CvarQuery(player.edict, self.store, self.cvar_name, self.cvar_value)
+        self.clear()
 
     def _unload_instance(self):
         self._cvars.remove(self)
