@@ -10,6 +10,8 @@
 from .cvar_checker import CvarChecker
 #   Cvar Query
 from .cvar_query import CvarQuery
+#   Cvar Warning
+from .cvar_warning import CvarWarning
 
 
 # =============================================================================
@@ -17,4 +19,5 @@ from .cvar_query import CvarQuery
 # =============================================================================
 __all__ = ("CvarChecker",
            "CvarQuery",
+           "CvarWarning",
            )
