@@ -36,7 +36,8 @@ class CvarQuery(WeakAutoUnload):
         self._cvar_queries.pop(self.cookie, None)
 
     @OnQueryCvarValueFinished
-    def on_query_cvar_value_finished(cookie, index, status, cvar_name, cvar_value):
+    def on_query_cvar_value_finished(
+        cookie, index, status, cvar_name, cvar_value):
         if not cookie in CvarQuery._cvar_queries:
             return
 
@@ -45,10 +46,13 @@ class CvarQuery(WeakAutoUnload):
             return
 
         cvar_query = CvarQuery._cvar_queries.pop(cookie)
-        if cvar_query.cvar_value is not None and cvar_value == str(cvar_query.cvar_value):
+        if (cvar_query.cvar_value is not None and
+            cvar_value == str(cvar_query.cvar_value)):
             return
 
         if cvar_query.kwargs:
-            cvar_query.callback(index, cvar_name, cvar_value, **cvar_query.kwargs)
+            cvar_query.callback(
+                index, cvar_name, cvar_value, **cvar_query.kwargs)
         else:
-            cvar_query.callback(index, cvar_name, cvar_value)
+            cvar_query.callback(
+                index, cvar_name, cvar_value)
