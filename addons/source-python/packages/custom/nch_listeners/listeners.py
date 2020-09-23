@@ -99,15 +99,14 @@ class NetChannelHandlerLMD(ListenerManagerDecorator):
     @OnClientConnect
     def on_client_connect(allow_connect_ptr, edict, name, address, reject_msg_ptr, reject_msg_len):
         """Hook the notifyer."""
-        if None in NetChannelHandlerLMD._hooked.values():
-            for function_info, function in NetChannelHandlerLMD._hooked.items():
-                if function is None:
-                    client = server.get_client(index_from_edict(edict) - 1)
-                    net_channel_handler = make_object(NetChannelHandler, client.net_channel.msg_handler)
-                    function = get_virtual_function(net_channel_handler, function_info)
-                    notifyer = getattr(sys.modules[__name__], "On"+function_info).notifyer
-                    function.add_hook(HookType.PRE, notifyer)
-                    NetChannelHandlerLMD._hooked[function_info] = function
+        for function_info, function in NetChannelHandlerLMD._hooked.items():
+            if function is None:
+                client = server.get_client(index_from_edict(edict) - 1)
+                net_channel_handler = make_object(NetChannelHandler, client.net_channel.msg_handler)
+                function = get_virtual_function(net_channel_handler, function_info)
+                notifyer = getattr(sys.modules[__name__], "On"+function_info).notifyer
+                function.add_hook(HookType.PRE, notifyer)
+                NetChannelHandlerLMD._hooked[function_info] = function
 
 
 class OnConnectionStart(NetChannelHandlerLMD):
@@ -318,3 +317,4 @@ class OnChangeSplitscreenUser(NetChannelHandlerLMD):
         on_change_splitscreen_user_listener_manager.notify(client, split_screen_user_slot)
 
         return 0
+
