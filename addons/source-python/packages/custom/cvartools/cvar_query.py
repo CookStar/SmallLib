@@ -38,7 +38,7 @@ class CvarQuery(WeakAutoUnload):
     @OnQueryCvarValueFinished
     def on_query_cvar_value_finished(
         cookie, index, status, cvar_name, cvar_value):
-        if not cookie in CvarQuery._cvar_queries:
+        if cookie not in CvarQuery._cvar_queries:
             return
 
         if status is not QueryCvarStatus.SUCCESS:
@@ -56,3 +56,4 @@ class CvarQuery(WeakAutoUnload):
         else:
             cvar_query.callback(
                 index, cvar_name, cvar_value)
+

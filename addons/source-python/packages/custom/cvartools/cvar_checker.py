@@ -87,3 +87,4 @@ class CvarChecker(WeakAutoUnload, set):
     def on_client_disconnect(index):
         for cvar in CvarChecker._cvars.values():
             cvar.discard(index)
+

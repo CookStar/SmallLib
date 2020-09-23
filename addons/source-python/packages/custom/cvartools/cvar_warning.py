@@ -65,6 +65,29 @@ class CvarWarning(CvarChecker, AutoUnload):
 
         self._warnings[id(self)] = self
 
+    def enable(self):
+        if id(self) not in self._warnings:
+            unregistered_events = set(self.events)
+            for cvar_warning in self._warnings.values():
+                unregistered_events -= cvar_warning.events
+            for event_name in unregistered_events:
+                event_manager.register_for_event(event_name, self.game_event)
+
+            self.restore()
+            self._warnings[id(self)] = self
+
+    def disable(self):
+        if id(self) in self._warnings:
+            del self._warnings[id(self)]
+            self.warned.clear()
+
+            registered_events = set()
+            for cvar_warning in self._warnings.values():
+                registered_events = registered_events | cvar_warning.events
+            for event_name in self.events-registered_events:
+                event_manager.unregister_for_event(event_name, self.game_event)
+                self._events.pop(event_name, None)
+
     def warn(self, index, cvar_name, cvar_value, event_name):
         self.add(index)
 
@@ -76,17 +99,19 @@ class CvarWarning(CvarChecker, AutoUnload):
             kick = False
             remains = 0
             for cvar_warning in self._warnings.values():
+                if index not in cvar_warning:
+                    continue
+
                 if cvar_warning.kick:
                     warned = cvar_warning.warned
                     remain = cvar_warning.kick - warned[index]
                     if remain == 0:
                         kick = True
                     else:
-                        if remains:
-                            remains = remain if remain < remains else remains
-                        else:
+                        if remains == 0 or remains > remain:
                             remains = remain
                     warned[index] += 1
+
                 cvars += (cvar_warning.cvar_name
                           + " "
                           + str(cvar_warning.cvar_value)
@@ -96,34 +121,29 @@ class CvarWarning(CvarChecker, AutoUnload):
                 player = Player(index)
                 message = cvartools_strings["kick"].get_string(
                     player.language,
-                    tag=cvartools_strings["tag"],
                     cvars=cvars,
                 )
                 player.kick(message)
                 return
 
+            until = cvartools_strings["until"].tokenized(
+                remains=remains,
+            ) if remains else ""
             SayText2(cvartools_strings["warning"]).send(
                 index,
                 tag=cvartools_strings["tag"],
                 cvars=cvars,
-                remains=remains,
+                until=until,
             )
             TextMsg(cvartools_strings["warning"], HudDestination.CONSOLE).send(
                 index,
                 tag=cvartools_strings["tag"],
                 cvars=cvars,
-                remains=remains,
+                until=until,
             )
 
     def _unload_instance(self):
-        del self._warnings[id(self)]
-
-        registered_events = set()
-        for cvar_warning in self._warnings.values():
-            registered_events = registered_events | cvar_warning.events
-        for event_name in self.events-registered_events:
-            event_manager.unregister_for_event(event_name, self.game_event)
-            self._events.pop(event_name, None)
+        self.disable()
 
         super()._unload_instance()
 
@@ -131,16 +151,13 @@ class CvarWarning(CvarChecker, AutoUnload):
     def game_event(game_event):
         try:
             player = Player.from_userid(game_event["userid"])
+            CvarWarning._events[game_event.name][player.index] = 0
         except KeyError:
             player = None
-
-        if player is not None:
-            CvarWarning._events[game_event.name][player.index] = 0
-        else:
             CvarWarning._events.pop(game_event.name, None)
 
         for cvar_warning in CvarWarning._warnings.values():
-            if not game_event.name in cvar_warning.events:
+            if game_event.name not in cvar_warning.events:
                 continue
 
             if player is not None:
@@ -174,3 +191,4 @@ class CvarWarning(CvarChecker, AutoUnload):
             cvar_warning.warned.pop(index, None)
         for events in CvarWarning._events.values():
             events.pop(index, None)
+
