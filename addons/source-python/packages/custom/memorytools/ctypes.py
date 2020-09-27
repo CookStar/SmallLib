@@ -19,6 +19,21 @@ from memory import DataType
 
 
 # =============================================================================
+# >> ALL DECLARATION
+# =============================================================================
+__all__ = ("get_ctype_argtypes",
+           "get_ctype_calling_convention",
+           "get_ctype_from_data_type",
+           "get_ctype_function",
+           "CDECL",
+           "FASTCALL",
+           "FASTCALL_CALLER",
+           "THISCALL",
+           "STDCALL",
+           )
+
+
+# =============================================================================
 # >> CLASSES
 # =============================================================================
 class CDECL:
