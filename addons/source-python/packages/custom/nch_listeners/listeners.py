@@ -21,9 +21,9 @@ from entities.helpers import index_from_edict
 #   Filters
 from filters.players import PlayerIter
 #   Listeners
+from listeners import on_client_connect_listener_manager
 from listeners import ListenerManager
 from listeners import ListenerManagerDecorator
-from listeners import OnClientConnect
 #   Memory
 from memory import get_virtual_function
 from memory import make_object
@@ -57,13 +57,10 @@ class NetChannelHandlerLMD(ListenerManagerDecorator):
     """Derived decorator class used to register/unregister a listener."""
 
     _hooked = defaultdict(lambda: None)
-    _callbacks = defaultdict(list)
 
     def __init__(self, callback):
         """Store the callback and hook the notifyer."""
         super().__init__(callback)
-
-        self._callbacks[self.function_info].append(self.callback)
 
         if self._hooked[self.function_info] is None:
             for player in PlayerIter("human"):
@@ -71,7 +68,9 @@ class NetChannelHandlerLMD(ListenerManagerDecorator):
                 function = get_virtual_function(net_channel_handler, self.function_info)
                 function.add_hook(HookType.PRE, self.notifyer)
                 self._hooked[self.function_info] = function
-                return
+                break
+            else:
+                on_client_connect_listener_manager.register_listener(NetChannelHandlerLMD.on_client_connect)
 
     @property
     def function_info(self):
@@ -85,18 +84,14 @@ class NetChannelHandlerLMD(ListenerManagerDecorator):
 
     def _unload_instance(self):
         """Unhook the notifyer."""
-        callbacks = self._callbacks[self.function_info]
-        callbacks.remove(self.callback)
+        super()._unload_instance()
 
-        if not callbacks and self._hooked[self.function_info] is not None:
+        if (len(self.manager) == 0 and
+            self._hooked[self.function_info] is not None):
             function = self._hooked.pop(self.function_info)
             function.remove_hook(HookType.PRE, self.notifyer)
 
-            del self._callbacks[self.function_info]
-
-        super()._unload_instance()
-
-    @OnClientConnect
+    @staticmethod
     def on_client_connect(allow_connect_ptr, edict, name, address, reject_msg_ptr, reject_msg_len):
         """Hook the notifyer."""
         for function_info, function in NetChannelHandlerLMD._hooked.items():
@@ -107,6 +102,8 @@ class NetChannelHandlerLMD(ListenerManagerDecorator):
                 notifyer = getattr(sys.modules[__name__], "On"+function_info).notifyer
                 function.add_hook(HookType.PRE, notifyer)
                 NetChannelHandlerLMD._hooked[function_info] = function
+
+        on_client_connect_listener_manager.unregister_listener(NetChannelHandlerLMD.on_client_connect)
 
 
 class OnConnectionStart(NetChannelHandlerLMD):
