@@ -33,12 +33,15 @@ def get_value_pointer(binary, identifier, offset=0, level=0, srv_check=True):
 
     return ptr
 
-def set_value_pointers_from_file(cls, f):
+def set_value_pointers_from_file(cls, file, manager=None):
     """Registers a new value pointers from a file."""
+    if manager is None:
+        manager = TypeManager()
+
     # Parse pointer data
     pointers = parse_data(
-        TypeManager(),
-        GameConfigObj(f), (
+        manager,
+        GameConfigObj(file), (
             (Key.BINARY, Key.as_str, NO_DEFAULT),
             (Key.IDENTIFIER, Key.as_identifier, NO_DEFAULT),
             (Key.OFFSET, Key.as_int, 0),
@@ -51,11 +54,14 @@ def set_value_pointers_from_file(cls, f):
     for name, data in pointers:
         setattr(cls, name, get_value_pointer(*data))
 
-def set_data_from_file(cls, f):
+def set_data_from_file(cls, file, manager=None):
     """Registers a new data from a file."""
-    cls_dict = vars(TypeManager().create_type_from_dict(
+    if manager is None:
+        manager = TypeManager()
+
+    cls_dict = vars(manager.create_type_from_dict(
         cls.__class__.__name__,
-        GameConfigObj(f),
+        GameConfigObj(file),
     ))
 
     for name, value in cls_dict.items():
