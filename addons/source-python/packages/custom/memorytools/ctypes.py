@@ -9,13 +9,18 @@
 #   Ctypes
 import ctypes
 
-# Source.Python
+# Source.Python Imports
 #   Core
 from core import PLATFORM
 #   Memory
 from memory import alloc
 from memory import Convention
 from memory import DataType
+
+# Memory Tools Imports
+#   Conventions
+from .conventions import CDECL_RETURN4
+from .conventions import FASTCALL_CALLER
 
 
 # =============================================================================
@@ -25,18 +30,18 @@ __all__ = ("get_ctype_argtypes",
            "get_ctype_calling_convention",
            "get_ctype_from_data_type",
            "get_ctype_function",
-           "CDECL",
-           "FASTCALL",
-           "FASTCALL_CALLER",
-           "THISCALL",
-           "STDCALL",
+           "Ctypes_CDECL",
+           "Ctypes_FASTCALL",
+           "Ctypes_FASTCALL_CALLER",
+           "Ctypes_THISCALL",
+           "Ctypes_STDCALL",
            )
 
 
 # =============================================================================
 # >> CLASSES
 # =============================================================================
-class CDECL:
+class Ctypes_CDECL:
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
         self.ctype = functype(address)
@@ -45,13 +50,13 @@ class CDECL:
         return self.ctype(*args, **kwargs)
 
 
-class STDCALL(CDECL):
+class Ctypes_STDCALL(Ctypes_CDECL):
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.WINFUNCTYPE(restype, *argtypes)
         self.ctype = functype(address)
 
 
-class THISCALL(CDECL):
+class Ctypes_THISCALL(Ctypes_CDECL):
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
 
@@ -89,7 +94,7 @@ class THISCALL(CDECL):
         return size
 
 
-class FASTCALL(THISCALL):
+class Ctypes_FASTCALL(Ctypes_THISCALL):
 
     def make_asm(self, argtypes, address):
         size = self.get_size(argtypes)
@@ -126,7 +131,7 @@ class FASTCALL(THISCALL):
         return size
 
 
-class FASTCALL_CALLER(FASTCALL):
+class Ctypes_FASTCALL_CALLER(Ctypes_FASTCALL):
 
     def make_asm(self, argtypes, address):
         size = self.get_size(argtypes)
@@ -147,7 +152,7 @@ class FASTCALL_CALLER(FASTCALL):
 # >> FUNCTIONS
 # =============================================================================
 def get_ctype_function(function, calling_convention=None, auto_dealloc=True):
-    address = function.trampoline.address
+    address = function.trampoline.address if function.is_hooked() else function.address
     argtypes = get_ctype_argtypes(function.arguments)
     restype = get_ctype_from_data_type(function.return_type)
 
@@ -155,6 +160,10 @@ def get_ctype_function(function, calling_convention=None, auto_dealloc=True):
         if function.convention != Convention.CUSTOM:
             calling_convention = get_ctype_calling_convention(
                 function.convention)
+        elif isinstance(function.custom_convention, CDECL_RETURN4):
+            calling_convention = Ctypes_CDECL
+        elif isinstance(function.custom_convention, FASTCALL_CALLER):
+            calling_convention = Ctypes_FASTCALL_CALLER
         else:
             raise ValueError("Calling convention is not specified.")
 
@@ -162,18 +171,20 @@ def get_ctype_function(function, calling_convention=None, auto_dealloc=True):
 
 def get_ctype_calling_convention(calling_convention):
     if PLATFORM == "linux":
-        return CDECL
-
-    if calling_convention == Convention.CDECL:
-        return CDECL
-    elif calling_convention == Convention.STDCALL:
-        return STDCALL
-    elif calling_convention == Convention.THISCALL:
-        return THISCALL
-    elif calling_convention == Convention.FASTCALL:
-        return FASTCALL
+        if (calling_convention == Convention.CDECL or
+            calling_convention == Convention.THISCALL):
+            return Ctypes_CDECL
     else:
-        raise ValueError("Given calling_convention is not supported.")
+        if calling_convention == Convention.CDECL:
+            return Ctypes_CDECL
+        elif calling_convention == Convention.STDCALL:
+            return Ctypes_STDCALL
+        elif calling_convention == Convention.THISCALL:
+            return Ctypes_THISCALL
+        elif calling_convention == Convention.FASTCALL:
+            return Ctypes_FASTCALL
+
+    raise ValueError("Given calling_convention is not supported.")
 
 def get_ctype_argtypes(argtypes):
     ctype_argtypes = list()
