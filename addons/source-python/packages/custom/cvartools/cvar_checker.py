@@ -60,6 +60,16 @@ class CvarChecker(WeakAutoUnload, set):
             )
         self.clear()
 
+    def update_index(self, index):
+        if index in self:
+            CvarQuery(
+                edict_from_index(index),
+                self.store,
+                self.cvar_name,
+                self.cvar_value,
+            )
+            self.remove(index)
+
     def restore(self):
         for player in PlayerIter("human"):
             CvarQuery(
