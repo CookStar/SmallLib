@@ -1,6 +1,6 @@
 # ../ctypes.py
 
-"""Provides a helper feature for ctype functions."""
+"""Provides a base way to get and set ctype data from config file."""
 
 # =============================================================================
 # >> IMPORTS
