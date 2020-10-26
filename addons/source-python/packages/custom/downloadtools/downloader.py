@@ -1,4 +1,4 @@
-# ../downloader.py
+# ../addons/source-python/packages/custom/downloadtools/downloader.py
 
 """Provides downloader functionality."""
 
@@ -9,7 +9,7 @@
 #   Ctypes
 import ctypes
 #   Pathlib
-import pathlib
+from pathlib import Path
 #   Weakref
 from weakref import WeakValueDictionary
 
@@ -77,7 +77,7 @@ class Downloader:
         else:
             compress = net_compresspackets.get_bool()
             for file in files:
-                path = pathlib.Path(GAME_PATH / file)
+                path = Path(GAME_PATH / file)
                 self.size += compress_file(path) if compress else path.stat().st_size
                 if self.downloadables is not None:
                     self.downloadables.add(file)

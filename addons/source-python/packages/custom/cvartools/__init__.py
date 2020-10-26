@@ -1,17 +1,14 @@
-# ../__init__.py
+# ../addons/source-python/packages/custom/cvartools/__init__.py
 
-"""Provides Cvar Tools based functionality."""
+"""Provides Cvar based functionality."""
 
 # =============================================================================
 # >> FORWARD IMPORTS
 # =============================================================================
 # Cvar Tools Imports
-#   Cvar Checker
-from .cvar_checker import CvarChecker
-#   Cvar Query
-from .cvar_query import CvarQuery
-#   Cvar Warning
-from .cvar_warning import CvarWarning
+from cvartools.cvar_checker import CvarChecker
+from cvartools.cvar_query import CvarQuery
+from cvartools.cvar_warning import CvarWarning
 
 
 # =============================================================================

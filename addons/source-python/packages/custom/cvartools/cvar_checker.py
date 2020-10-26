@@ -1,4 +1,4 @@
-# ../cvar_checker.py
+# ../addons/source-python/packages/custom/cvartools/cvar_checker.py
 
 """Provides Cvar Checking functionality."""
 
@@ -21,8 +21,7 @@ from listeners import OnClientDisconnect
 from listeners import OnClientPutInServer
 
 # Cvar Tools Imports
-#   Cvar Query
-from .cvar_query import CvarQuery
+from cvartools.cvar_query import CvarQuery
 
 
 # =============================================================================

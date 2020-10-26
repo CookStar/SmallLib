@@ -1,4 +1,4 @@
-# ../conventions.py
+# ../addons/source-python/packages/custom/memorytools/conventions.py
 
 """Provides a helper calling conventions."""
 

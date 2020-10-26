@@ -1,35 +1,34 @@
-# ../__init__.py
+# ../addons/source-python/packages/custom/nch_listeners/__init__.py
 
-"""Provides Net Channel Handler listener based functionality."""
+"""Provides Net Channel Handler listeners."""
 
 # =============================================================================
 # >> FORWARD IMPORTS
 # =============================================================================
-# Net Channel Handler Listener Imports
-#   Listeners
-from .listeners import NetChannelHandlerLMD
-from .listeners import OnConnectionStart
-from .listeners import OnConnectionStop
-from .listeners import OnConnectionClosing
-from .listeners import OnConnectionCrashed
-from .listeners import OnPacketStart
-from .listeners import OnPacketEnd
-from .listeners import OnFileRequested
-from .listeners import OnFileReceived
-from .listeners import OnFileDenied
-from .listeners import OnFileSent
-from .listeners import OnChangeSplitscreenUser
-from .listeners import on_connection_start_listener_manager
-from .listeners import on_connection_stop_listener_manager
-from .listeners import on_connection_closing_listener_manager
-from .listeners import on_connection_crashed_listener_manager
-from .listeners import on_packet_start_listener_manager
-from .listeners import on_packet_end_listener_manager
-from .listeners import on_file_requested_listener_manager
-from .listeners import on_file_received_listener_manager
-from .listeners import on_file_denied_listener_manager
-from .listeners import on_file_sent_listener_manager
-from .listeners import on_change_splitscreen_user_listener_manager
+# Net Channel Handler Listeners Imports
+from nch_listeners.listeners import NetChannelHandlerLMD
+from nch_listeners.listeners import OnConnectionStart
+from nch_listeners.listeners import OnConnectionStop
+from nch_listeners.listeners import OnConnectionClosing
+from nch_listeners.listeners import OnConnectionCrashed
+from nch_listeners.listeners import OnPacketStart
+from nch_listeners.listeners import OnPacketEnd
+from nch_listeners.listeners import OnFileRequested
+from nch_listeners.listeners import OnFileReceived
+from nch_listeners.listeners import OnFileDenied
+from nch_listeners.listeners import OnFileSent
+from nch_listeners.listeners import OnChangeSplitscreenUser
+from nch_listeners.listeners import on_connection_start_listener_manager
+from nch_listeners.listeners import on_connection_stop_listener_manager
+from nch_listeners.listeners import on_connection_closing_listener_manager
+from nch_listeners.listeners import on_connection_crashed_listener_manager
+from nch_listeners.listeners import on_packet_start_listener_manager
+from nch_listeners.listeners import on_packet_end_listener_manager
+from nch_listeners.listeners import on_file_requested_listener_manager
+from nch_listeners.listeners import on_file_received_listener_manager
+from nch_listeners.listeners import on_file_denied_listener_manager
+from nch_listeners.listeners import on_file_sent_listener_manager
+from nch_listeners.listeners import on_change_splitscreen_user_listener_manager
 
 
 # =============================================================================

@@ -1,6 +1,6 @@
-# ../__init__.py
+# ../addons/source-python/packages/custom/downloadtools/__init__.py
 
-"""Provides Download Tools based functionality."""
+"""Provides Download based functionality."""
 
 # =============================================================================
 # >> FORWARD IMPORTS
@@ -8,6 +8,8 @@
 # Python Imports
 #   Ctypes
 import ctypes
+#   Pathlib
+from pathlib import Path
 
 # Source.Python Imports
 #   Core
@@ -59,14 +61,18 @@ transfer_id = 0
 def compress_file(path, data=None):
     """Compresses the file or bytes and creates a ztmp file.
 
+    Returns the compressed file size on successful compression,
+    or the source file size on failure.
+
     :param pathlib.Path/str path:
         The source file path to be compressed.
     :param bytes data:
         The data to compress the file without opening it.
+    :rtype: int
     """
 
     if isinstance(path, str):
-        path = pathlib.Path(GAME_PATH / path)
+        path = Path(GAME_PATH / path)
 
     ztmp_path = path.with_suffix(path.suffix+".ztmp")
     if ztmp_path.exists():

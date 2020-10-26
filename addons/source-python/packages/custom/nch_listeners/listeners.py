@@ -1,6 +1,6 @@
-# ../listeners.py
+# ../addons/source-python/packages/custom/nch_listeners/listeners.py
 
-"""Provides Net Channel Handler listener based functionality."""
+"""Provides Net Channel Handler listeners."""
 
 # =============================================================================
 # >> IMPORTS

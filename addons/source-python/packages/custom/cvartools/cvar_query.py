@@ -1,4 +1,4 @@
-# ../cvar_query.py
+# ../addons/source-python/packages/custom/cvartools/cvar_query.py
 
 """Provides Cvar Querying functionality."""
 

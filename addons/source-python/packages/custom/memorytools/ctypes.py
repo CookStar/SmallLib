@@ -1,4 +1,4 @@
-# ../ctypes.py
+# ../addons/source-python/packages/custom/memorytools/ctypes.py
 
 """Provides a helper feature for ctypes."""
 
@@ -19,8 +19,8 @@ from memory import DataType
 
 # Memory Tools Imports
 #   Conventions
-from .conventions import CDECL_RETURN4
-from .conventions import FASTCALL_CALLER
+from memorytools.conventions import CDECL_RETURN4
+from memorytools.conventions import FASTCALL_CALLER
 
 
 # =============================================================================

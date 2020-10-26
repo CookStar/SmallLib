@@ -1,4 +1,4 @@
-# ../send_files.py
+# ../addons/source-python/packages/custom/downloadtools/send_files.py
 
 """Provides file sending functionality."""
 
@@ -9,7 +9,7 @@
 #   Ctypes
 import ctypes
 #   Pathlib
-import pathlib
+from pathlib import Path
 #   Weakref
 from weakref import WeakValueDictionary
 
@@ -73,7 +73,7 @@ class SendFiles:
         if not self.size:
             compress = net_compresspackets.get_bool()
             for file in files:
-                path = pathlib.Path(GAME_PATH / file)
+                path = Path(GAME_PATH / file)
                 self.size += compress_file(path) if compress else path.stat().st_size
 
         self.estimated_time = (self.size/256)*server.tick_interval

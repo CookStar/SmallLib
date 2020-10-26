@@ -1,4 +1,4 @@
-# ../base.py
+# ../addons/source-python/packages/custom/datatools/base.py
 
 """Provides a base way to get and set data from config file."""
 
@@ -10,17 +10,17 @@
 from core import GameConfigObj
 #   Memory
 from memory import find_binary
-from memory.manager import TypeManager
+from memory.helpers import parse_data
 from memory.helpers import Key
 from memory.helpers import NO_DEFAULT
-from memory.helpers import parse_data
+from memory.manager import TypeManager
 
 
 # =============================================================================
 # >> FUNCTIONS
 # =============================================================================
-def get_value_pointer(binary, identifier, offset=0, level=0, srv_check=True):
-    """Return the value pointers."""
+def get_pointer(binary, identifier, offset=0, level=0, srv_check=True):
+    """Return the value pointer."""
     # Get the binary
     binary = find_binary(binary, srv_check)
 
@@ -33,8 +33,8 @@ def get_value_pointer(binary, identifier, offset=0, level=0, srv_check=True):
 
     return ptr
 
-def set_value_pointers_from_file(cls, file, manager=None):
-    """Registers a new value pointers from a file."""
+def create_pointer_pipe_from_file(file, manager=None):
+    """Create a value pointer pipe from a file."""
     if manager is None:
         manager = TypeManager()
 
@@ -50,9 +50,21 @@ def set_value_pointers_from_file(cls, file, manager=None):
         )
     )
 
-    # Create the value pointer attribute
+    # Create the pointers
+    cls_dict = {}
     for name, data in pointers:
-        setattr(cls, name, get_value_pointer(*data))
+        cls_dict[name] = get_pointer(*data)
+
+    return type("PointerPipe", (object,), cls_dict)
+
+def set_pointer_from_file(cls, file, manager=None):
+    """Registers a new value pointers from a file."""
+    pointer_pipe = create_pointer_pipe_from_file(file, manager)
+
+    # Set the value pointer attribute
+    for name, value in pointer_pipe.__dict__.items():
+        if not name.startswith("__"):
+            setattr(cls, name, value)
 
 def set_data_from_file(cls, file, manager=None):
     """Registers a new data from a file."""

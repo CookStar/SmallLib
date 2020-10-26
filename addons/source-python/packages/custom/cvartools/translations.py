@@ -1,6 +1,6 @@
-# ../translations.py
+# ../addons/source-python/packages/custom/cvartools/translations.py
 
-""""""
+"""Translations for Cvar Tools."""
 
 # =============================================================================
 # >> IMPORTS

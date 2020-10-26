@@ -1,4 +1,4 @@
-# ../cvar_warning.py
+# ../addons/source-python/packages/custom/cvartools/cvar_warning.py
 
 """Provides Cvar Warning functionality."""
 
@@ -26,12 +26,9 @@ from messages import TextMsg
 from players.entity import Player
 
 # Cvar Tools Imports
-#   Cvar Checker
-from .cvar_checker import CvarChecker
-#   Cvar Query
-from .cvar_query import CvarQuery
-#   Translations
-from .translations import cvartools_strings
+from cvartools.cvar_checker import CvarChecker
+from cvartools.cvar_query import CvarQuery
+from cvartools.translations import cvartools_strings
 
 
 # =============================================================================
