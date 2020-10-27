@@ -61,6 +61,8 @@ class NetChannelHandlerListenerManager(ListenerManager):
 
     def on_client_connect(self, allow_connect_ptr, edict, name, address, reject_msg_ptr, reject_msg_len):
         """Hook the notifyer."""
+        on_client_connect_listener_manager.unregister_listener(self.on_client_connect)
+
         if len(self) == 0:
             return
 
@@ -68,8 +70,6 @@ class NetChannelHandlerListenerManager(ListenerManager):
         net_channel_handler = make_object(NetChannelHandler, client.net_channel.msg_handler)
         self.function = get_virtual_function(net_channel_handler, self.function_info)
         self.function.add_pre_hook(self.notifyer)
-
-        on_client_connect_listener_manager.unregister_listener(self.on_client_connect)
 
     @property
     def function_info(self):
