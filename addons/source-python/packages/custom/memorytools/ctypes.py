@@ -18,7 +18,7 @@ from memory import Convention
 from memory import DataType
 
 # Memory Tools Imports
-#   Conventions
+#   Memory Tools
 from memorytools.conventions import CDECL_RETURN4
 from memorytools.conventions import FASTCALL_CALLER
 
