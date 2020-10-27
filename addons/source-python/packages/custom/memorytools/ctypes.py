@@ -84,7 +84,7 @@ class Ctypes_THISCALL(Ctypes_CDECL):
 
     def get_size(self, argtypes):
         size = 0
-        for argtype in args[1:]:
+        for argtype in argtypes[1:]:
             sizeof_argtype = ctypes.sizeof(argtype)
             if sizeof_argtype >= 4:
                 size += sizeof_argtype
