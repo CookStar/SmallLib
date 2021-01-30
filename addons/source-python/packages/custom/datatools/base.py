@@ -5,39 +5,26 @@
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
-# Source.Python
+# Source.Python Imports
 #   Core
 from core import GameConfigObj
 #   Memory
-from memory import find_binary
 from memory.helpers import parse_data
 from memory.helpers import Key
 from memory.helpers import NO_DEFAULT
+from memory.manager import manager
 from memory.manager import TypeManager
+
+# Memory Tools Imports
+#   Memory Tools
+from memorytools import get_pointer
 
 
 # =============================================================================
 # >> FUNCTIONS
 # =============================================================================
-def get_pointer(binary, identifier, offset=0, level=0, srv_check=True):
-    """Return the value pointer."""
-    # Get the binary
-    binary = find_binary(binary, srv_check)
-
-    # Get the value pointer
-    ptr = binary.find_pointer(identifier, offset, level)
-
-    # Raise an error if the pointer is invalid
-    if not ptr:
-        raise ValueError("Unable to find the value pointer.")
-
-    return ptr
-
-def create_pointer_pipe_from_file(file, manager=None):
+def create_pointer_pipe_from_file(file):
     """Create a value pointer pipe from a file."""
-    if manager is None:
-        manager = TypeManager()
-
     # Parse pointer data
     pointers = parse_data(
         manager,
@@ -57,9 +44,9 @@ def create_pointer_pipe_from_file(file, manager=None):
 
     return type("PointerPipe", (object,), cls_dict)
 
-def set_pointer_from_file(cls, file, manager=None):
+def set_pointer_from_file(cls, file):
     """Registers a new value pointers from a file."""
-    pointer_pipe = create_pointer_pipe_from_file(file, manager)
+    pointer_pipe = create_pointer_pipe_from_file(file)
 
     # Set the value pointer attribute
     for name, value in pointer_pipe.__dict__.items():
