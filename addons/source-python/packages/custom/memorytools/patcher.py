@@ -1,6 +1,6 @@
-# ../addons/source-python/packages/custom/memorytools/ctypes.py
+# ../addons/source-python/packages/custom/memorytools/patcher.py
 
-"""Provides a helper feature for ctypes."""
+"""Provides a memory patching functionality."""
 
 # =============================================================================
 # >> IMPORTS
