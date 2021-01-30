@@ -109,10 +109,11 @@ class CvarWarning(CvarChecker, AutoUnload):
                             remains = remain
                     warned[index] += 1
 
-                cvars += (cvar_warning.cvar_name
-                          + " "
-                          + str(cvar_warning.cvar_value)
-                          + ";")
+                if cvar_warning.cvar_name not in cvars:
+                    cvars += (cvar_warning.cvar_name
+                              + " "
+                              + str(cvar_warning.cvar_value)
+                              + ";")
 
             if kick:
                 player = Player(index)
@@ -123,21 +124,14 @@ class CvarWarning(CvarChecker, AutoUnload):
                 player.kick(message)
                 return
 
-            until = cvartools_strings["until"].tokenized(
-                remains=remains,
-            ) if remains else ""
-            SayText2(cvartools_strings["warning"]).send(
-                index,
+            message = cvartools_strings["warning"].tokenized(
                 tag=cvartools_strings["tag"],
                 cvars=cvars,
-                until=until,
+                until=cvartools_strings["until"].tokenized(remains=remains) if remains else "",
             )
-            TextMsg(cvartools_strings["warning"], HudDestination.CONSOLE).send(
-                index,
-                tag=cvartools_strings["tag"],
-                cvars=cvars,
-                until=until,
-            )
+
+            SayText2(message).send(index)
+            TextMsg(message, HudDestination.CONSOLE).send(index)
 
     def _unload_instance(self):
         self.disable()
