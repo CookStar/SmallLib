@@ -50,7 +50,8 @@ class NetChannelHandlerListenerManager(ListenerManager):
             self.function.add_pre_hook(self.notifyer)
             break
         else:
-            on_client_connect_listener_manager.register_listener(self.on_client_connect)
+            if self.on_client_connect not in on_client_connect_listener_manager:
+                on_client_connect_listener_manager.register_listener(self.on_client_connect)
 
     def finalize(self):
         """Called when the last callback is being unregistered."""
