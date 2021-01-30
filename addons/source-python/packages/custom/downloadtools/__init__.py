@@ -74,7 +74,12 @@ def compress_file(path, data=None):
     if isinstance(path, str):
         path = Path(GAME_PATH / path)
 
-    ztmp_path = path.with_suffix(path.suffix+".ztmp")
+    suffix = path.suffix
+    if suffix == ".ztmp":
+        ztmp_path = path
+    else:
+        ztmp_path = path.with_suffix(suffix+".ztmp")
+
     if ztmp_path.exists():
         return ztmp_path.stat().st_size
 
