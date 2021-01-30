@@ -23,6 +23,7 @@ __all__ = ("CDECL_RETURN4",
 # =============================================================================
 # >> CLASSES
 # =============================================================================
+@manager.custom_calling_convention
 class CDECL_RETURN4(CallingConvention):
     default_convention = Convention.CDECL
 
@@ -30,13 +31,10 @@ class CDECL_RETURN4(CallingConvention):
         return 4
 
 
+@manager.custom_calling_convention
 class FASTCALL_CALLER(CallingConvention):
     default_convention = Convention.FASTCALL
 
     def get_pop_size(self):
         return 0
-
-
-manager.register_convention("CDECL_RETURN4", CDECL_RETURN4)
-manager.register_convention("FASTCALL_CALLER", FASTCALL_CALLER)
 
