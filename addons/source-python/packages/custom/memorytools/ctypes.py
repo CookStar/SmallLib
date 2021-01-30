@@ -60,13 +60,12 @@ class Ctypes_THISCALL(Ctypes_CDECL):
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
 
-        op_codes = self.make_asm(argtypes, address)
+        op_codes = bytes(self.make_asm(argtypes, address))
         op_codes_size = len(op_codes)
 
         self.memory = alloc(op_codes_size, auto_dealloc)
         self.memory.unprotect(op_codes_size)
-        for offset, op_code in enumerate(op_codes):
-            self.memory.set_uchar(op_code, offset)
+        ctypes.memmove(ctypes.c_void_p(self.memory.address), op_codes, op_codes_size)
 
         self.ctype = functype(self.memory.address)
 
