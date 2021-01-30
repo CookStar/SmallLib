@@ -169,63 +169,53 @@ def get_ctype_function(function, calling_convention=None, auto_dealloc=True):
 
     return calling_convention(address, argtypes, restype, auto_dealloc)
 
-def get_ctype_calling_convention(calling_convention):
-    if PLATFORM == "linux":
-        if (calling_convention == Convention.CDECL or
-            calling_convention == Convention.THISCALL):
-            return Ctypes_CDECL
-    else:
-        if calling_convention == Convention.CDECL:
-            return Ctypes_CDECL
-        elif calling_convention == Convention.STDCALL:
-            return Ctypes_STDCALL
-        elif calling_convention == Convention.THISCALL:
-            return Ctypes_THISCALL
-        elif calling_convention == Convention.FASTCALL:
-            return Ctypes_FASTCALL
+if PLATFORM == "linux":
+    _ctype_calling_convention = {
+        Convention.CDECL: Ctypes_CDECL,
+        Convention.THISCALL: Ctypes_CDECL,
+    }
+else:
+    _ctype_calling_convention = {
+        Convention.CDECL: Ctypes_CDECL,
+        Convention.THISCALL: Ctypes_THISCALL,
+        Convention.STDCALL: Ctypes_STDCALL,
+        Convention.FASTCALL: Ctypes_FASTCALL,
+    }
 
-    raise ValueError("Given calling_convention is not supported.")
+def get_ctype_calling_convention(calling_convention):
+    try:
+        return _ctype_calling_convention[calling_convention]
+    except KeyError:
+        raise ValueError("Given calling_convention is not supported.")
 
 def get_ctype_argtypes(argtypes):
     ctype_argtypes = list()
     for data_type in argtypes:
-        ctype_argtypes.append(
-            get_ctype_from_data_type(data_type))
+        ctype_argtypes.append(get_ctype_from_data_type(data_type))
     return tuple(ctype_argtypes)
 
+_ctype_data_type = {
+    DataType.VOID: None,
+    DataType.BOOL: ctypes.c_bool,
+    DataType.CHAR: ctypes.c_char,
+    DataType.UCHAR: ctypes.c_ubyte,
+    DataType.SHORT: ctypes.c_short,
+    DataType.USHORT: ctypes.c_ushort,
+    DataType.INT: ctypes.c_int,
+    DataType.UINT: ctypes.c_uint,
+    DataType.LONG: ctypes.c_long,
+    DataType.ULONG: ctypes.c_ulong,
+    DataType.LONG_LONG: ctypes.c_longlong,
+    DataType.ULONG_LONG: ctypes.c_ulonglong,
+    DataType.FLOAT: ctypes.c_float,
+    DataType.DOUBLE: ctypes.c_double,
+    DataType.POINTER: ctypes.c_void_p,
+    DataType.STRING: ctypes.c_char_p
+}
+
 def get_ctype_from_data_type(data_type):
-    if data_type == DataType.VOID:
-        return None
-    elif data_type == DataType.BOOL:
-        return ctypes.c_bool
-    elif data_type == DataType.CHAR:
-        return ctypes.c_char
-    elif data_type == DataType.UCHAR:
-        return ctypes.c_ubyte
-    elif data_type == DataType.SHORT:
-        return ctypes.c_short
-    elif data_type == DataType.USHORT:
-        return ctypes.c_ushort
-    elif data_type == DataType.INT:
-        return ctypes.c_int
-    elif data_type == DataType.UINT:
-        return ctypes.c_uint
-    elif data_type == DataType.LONG:
-        return ctypes.c_long
-    elif data_type == DataType.ULONG:
-        return ctypes.c_ulong
-    elif data_type == DataType.LONG_LONG:
-        return ctypes.c_longlong
-    elif data_type == DataType.ULONG_LONG:
-        return ctypes.c_ulonglong
-    elif data_type == DataType.FLOAT:
-        return ctypes.c_float
-    elif data_type == DataType.DOUBLE:
-        return ctypes.c_double
-    elif data_type == DataType.POINTER:
-        return ctypes.c_void_p
-    elif data_type == DataType.STRING:
-        return ctypes.c_char_p
-    else:
+    try:
+        return _ctype_data_type[data_type]
+    except KeyError:
         raise ValueError("Given data_type is not supported.")
 
