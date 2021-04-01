@@ -12,8 +12,6 @@ import ctypes
 from pathlib import Path
 
 # Source.Python Imports
-#   Core
-from core import SOURCE_ENGINE
 #   Cvars
 from cvars import ConVar
 #   Paths
@@ -41,7 +39,7 @@ __all__ = ("compress_file",
 # >> GLOBAL VARIABLES
 # =============================================================================
 _ctype_pipe = create_ctype_pipe_from_file(
-    CUSTOM_DATA_PATH / "downloadtools" / "data" / f"{SOURCE_ENGINE}.ini",
+    CUSTOM_DATA_PATH / "downloadtools" / "data.ini",
     auto_dealloc=False
 )
 
