@@ -22,12 +22,14 @@ from configobj import Section
 # Source.Python Imports
 #   Core
 from core import GameConfigObj
-from core.dumps import _get_datamaps
+#from core.dumps import _get_datamaps
 #   Entities
 from entities.classes import server_classes
 from entities.classes import _managers_path
 from entities.classes import _supported_keyvalue_types
 from entities.datamaps import FieldType
+from entities.entity import BaseEntity
+from entities.factories import factory_dictionary
 #   Paths
 from paths import CUSTOM_DATA_PATH
 from paths import CUSTOM_PACKAGES_PATH
@@ -54,7 +56,7 @@ __all__ = ("get_entities_data",
 # =============================================================================
 # >> GLOBAL VARIABLES
 # =============================================================================
-datamaps = dict()
+#datamaps = dict()
 data_paths = defaultdict(set)
 
 # ../addons/source-python/data/custom/entities
@@ -93,17 +95,27 @@ def reload_entities_data(dir=None):
         else:
             raise ValueError("Invalid data path: {path}".format(path=data_path))
 
-    if datamaps:
-        update_data()
+    for classname in factory_dictionary:
+        base_entity = BaseEntity.find(classname)
+        if base_entity is not None:
+            datamap = base_entity.datamap
+            while datamap:
+                class_name = datamap.class_name
+                if class_name not in server_classes:
+                    server_classes._get_server_class(class_name, datamap)
+                datamap = datamap.base
+
+    update_data()
+
+    if (data_paths and
+        on_entity_created not in on_entity_created_listener_manager):
+        on_entity_created_listener_manager.register_listener(on_entity_created)
 
 def update_data():
     for class_name, paths in list(data_paths.items()):
         server_class = server_classes.get(class_name, None)
-        datamap = datamaps.get(class_name, None)
         if server_class is None:
-            if datamap is None:
-                continue
-            server_class = server_classes._get_server_class(class_name, datamap)
+            continue
 
         for path in paths:
             raw_data = GameConfigObj(path)
@@ -112,6 +124,10 @@ def update_data():
                 setattr(server_class, name, value)
 
         del data_paths[class_name]
+
+    if (not data_paths and
+        on_entity_created in on_entity_created_listener_manager):
+        on_entity_created_listener_manager.unregister_listener(on_entity_created)
 
 def set_server_class(raw_data, server_class, class_name):
     for name, value in raw_data.get("input", {}).items():
@@ -225,8 +241,7 @@ def on_entity_created(base_entity):
     server_classes.get_entity_server_classes(base_entity)
     update_data()
 
-on_entity_created_listener_manager.register_listener(on_entity_created)
-
+"""
 def on_tick():
     if not datamaps:
         datamaps.update(_get_datamaps())
@@ -234,4 +249,5 @@ def on_tick():
     on_entity_created_listener_manager.unregister_listener(on_entity_created)
 
 on_tick_listener_manager.register_listener(on_tick)
+"""
 
