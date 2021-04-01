@@ -11,6 +11,7 @@ import ctypes
 
 # Source.Python Imports
 #   Core
+from core import AutoUnload
 from core import PLATFORM
 #   Memory
 from memory import alloc
@@ -30,6 +31,7 @@ __all__ = ("get_ctype_argtypes",
            "get_ctype_calling_convention",
            "get_ctype_from_data_type",
            "get_ctype_function",
+           "Base_Ctypes",
            "Ctypes_CDECL",
            "Ctypes_FASTCALL",
            "Ctypes_FASTCALL_CALLER",
@@ -41,47 +43,54 @@ __all__ = ("get_ctype_argtypes",
 # =============================================================================
 # >> CLASSES
 # =============================================================================
-class Ctypes_CDECL:
-    def __init__(self, address, argtypes, restype, auto_dealloc=True):
-        functype = ctypes.CFUNCTYPE(restype, *argtypes)
-        self.ctype = functype(address)
-
-    def __call__(self, *args, **kwargs):
-        return self.ctype(*args, **kwargs)
-
-
-class Ctypes_STDCALL(Ctypes_CDECL):
-    def __init__(self, address, argtypes, restype, auto_dealloc=True):
-        functype = ctypes.WINFUNCTYPE(restype, *argtypes)
-        self.ctype = functype(address)
-
-
-class Ctypes_THISCALL(Ctypes_CDECL):
+class Base_Ctypes(AutoUnload):
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
 
-        op_codes = bytes(self.make_asm(argtypes, address))
+        size = self.get_size(argtypes)
+        op_codes = self.make_asm(address, size, argtypes, restype)
         op_codes_size = len(op_codes)
 
         self.memory = alloc(op_codes_size, auto_dealloc)
         self.memory.unprotect(op_codes_size)
         ctypes.memmove(ctypes.c_void_p(self.memory.address), op_codes, op_codes_size)
 
-        self.ctype = functype(self.memory.address)
+        self.function = functype(self.memory.address)
 
-    def make_asm(self, argtypes, address):
-        size = self.get_size(argtypes)
-        op_codes = []
-        op_codes.extend([0x8b, 0x4c, 0x24, 0x04])           #   mov     ecx, [esp+4]
-        for i in range(0, size, 4):
-            op_codes.extend([0xff, 0x74, 0x24, size+4])     #   push	dword[esp+size+4]
-        op_codes.extend([0xb8])
-        op_codes.extend((address).to_bytes(4, "little"))    #   mov     eax, address
-        op_codes.extend([0xff, 0xd0])                       #   call    eax
-        op_codes.extend([0xc3])                             #   ret
-        return op_codes
+    def __call__(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
 
-    def get_size(self, argtypes):
+    def _unload_instance(self):
+        self.memory.dealloc()
+
+    @staticmethod
+    def get_size(argtypes):
+        raise NotImplementedError("Needs to be implemented by a sub class.")
+
+    @staticmethod
+    def make_asm(address, size, argtypes, restype):
+        raise NotImplementedError("Needs to be implemented by a sub class.")
+
+
+class Ctypes_CDECL:
+    def __init__(self, address, argtypes, restype, auto_dealloc=True):
+        functype = ctypes.CFUNCTYPE(restype, *argtypes)
+        self.function = functype(address)
+
+    def __call__(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
+
+
+class Ctypes_STDCALL(Ctypes_CDECL):
+    def __init__(self, address, argtypes, restype, auto_dealloc=True):
+        functype = ctypes.WINFUNCTYPE(restype, *argtypes)
+        self.function = functype(address)
+
+
+class Ctypes_THISCALL(Base_Ctypes):
+
+    @staticmethod
+    def get_size(argtypes):
         size = 0
         for argtype in argtypes[1:]:
             sizeof_argtype = ctypes.sizeof(argtype)
@@ -92,23 +101,23 @@ class Ctypes_THISCALL(Ctypes_CDECL):
 
         return size
 
-
-class Ctypes_FASTCALL(Ctypes_THISCALL):
-
-    def make_asm(self, argtypes, address):
-        size = self.get_size(argtypes)
+    @staticmethod
+    def make_asm(address, size, argtypes, restype):
         op_codes = []
         op_codes.extend([0x8b, 0x4c, 0x24, 0x04])           #   mov     ecx, [esp+4]
-        op_codes.extend([0x8b, 0x54, 0x24, 0x08])           #   mov     edx, [esp+8]
         for i in range(0, size, 4):
-            op_codes.extend([0xff, 0x74, 0x24, size+8])     #   push	dword[esp+size+8]
+            op_codes.extend([0xff, 0x74, 0x24, size+4])     #   push	dword[esp+size+4]
         op_codes.extend([0xb8])
         op_codes.extend((address).to_bytes(4, "little"))    #   mov     eax, address
         op_codes.extend([0xff, 0xd0])                       #   call    eax
         op_codes.extend([0xc3])                             #   ret
-        return op_codes
+        return bytes(op_codes)
 
-    def get_size(self, argtypes):
+
+class Ctypes_FASTCALL(Base_Ctypes):
+
+    @staticmethod
+    def get_size(argtypes):
         size = 0
         skip = True
         for index, argtype in enumerate(argtypes):
@@ -129,11 +138,24 @@ class Ctypes_FASTCALL(Ctypes_THISCALL):
 
         return size
 
+    @staticmethod
+    def make_asm(address, size, argtypes, restype):
+        op_codes = []
+        op_codes.extend([0x8b, 0x4c, 0x24, 0x04])           #   mov     ecx, [esp+4]
+        op_codes.extend([0x8b, 0x54, 0x24, 0x08])           #   mov     edx, [esp+8]
+        for i in range(0, size, 4):
+            op_codes.extend([0xff, 0x74, 0x24, size+8])     #   push	dword[esp+size+8]
+        op_codes.extend([0xb8])
+        op_codes.extend((address).to_bytes(4, "little"))    #   mov     eax, address
+        op_codes.extend([0xff, 0xd0])                       #   call    eax
+        op_codes.extend([0xc3])                             #   ret
+        return bytes(op_codes)
+
 
 class Ctypes_FASTCALL_CALLER(Ctypes_FASTCALL):
 
-    def make_asm(self, argtypes, address):
-        size = self.get_size(argtypes)
+    @staticmethod
+    def make_asm(address, size, argtypes, restype):
         op_codes = []
         op_codes.extend([0x8b, 0x4c, 0x24, 0x04])           #   mov     ecx, [esp+4]
         op_codes.extend([0x8b, 0x54, 0x24, 0x08])           #   mov     edx, [esp+8]
@@ -144,7 +166,7 @@ class Ctypes_FASTCALL_CALLER(Ctypes_FASTCALL):
         op_codes.extend([0xff, 0xd0])                       #   call    eax
         op_codes.extend([0x83, 0xc4, size])                 #   add     esp, size
         op_codes.extend([0xc3])                             #   ret
-        return op_codes
+        return bytes(op_codes)
 
 
 # =============================================================================
