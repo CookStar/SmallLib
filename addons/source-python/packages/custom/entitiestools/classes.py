@@ -215,21 +215,21 @@ def get_entities_data(base_entity, dir=None, plugin=False):
             raise ValueError("Unable to identify the Plugin/Custom Packages.")
 
     if dir is not None:
-        data_path = ENTITIES_DATA_PATH / dir
-        if data_path.exists() and data_path.is_dir():
-            data_paths = [data_path]
+        path = ENTITIES_DATA_PATH / dir
+        if path.exists() and path.is_dir():
+            paths = [path]
         else:
-            raise ValueError("Invalid data path: {path}".format(path=data_path))
+            raise ValueError("Invalid data path: {path}".format(path=path))
     else:
-        data_paths = [path for path in ENTITIES_DATA_PATH.iterdir() if path.is_dir()]
+        paths = [path for path in ENTITIES_DATA_PATH.iterdir() if path.is_dir()]
 
     entity_data = dict()
     entity_server_classes = [server_class.__name__ for server_class in reversed(server_classes.get_entity_server_classes(base_entity))]
     for class_name in entity_server_classes:
         file_name = class_name + ".ini"
         entity_data.update(get_data_from_file(_managers_path / file_name))
-        for data_path in data_paths:
-            entity_data.update(get_data_from_file(str(data_path / file_name)))        
+        for path in paths:
+            entity_data.update(get_data_from_file(str(path / file_name)))
 
     return entity_data
 
