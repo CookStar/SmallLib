@@ -292,7 +292,6 @@ def create_type_from_file(type_name, file, bases=(CustomType,), manager=manager)
     return manager.create_type(type_name, get_type_from_file(file, manager), bases)
 
 def set_type_from_file(cls, file):
-    """Registers a new data to class from a file."""
     for name, value in get_type_from_file(file, cls._manager).items():
         setattr(cls, name, value)
 
