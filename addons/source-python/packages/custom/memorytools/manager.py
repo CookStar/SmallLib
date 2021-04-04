@@ -126,18 +126,11 @@ def get_function_from_file(file, manager=manager):
 def get_function_from_dict(raw_data, manager=manager):
     function_dict = dict()
 
-    data = tuple(parse_data(
-        manager,
-        {0: dict((k, v) for k, v in raw_data.items() if not isinstance(
-            v, dict))},
-        (
-            (Key.BINARY, Key.as_str, None),
-            (Key.SRV_CHECK, Key.as_bool, True)
-        )
-    ))[0][1]
+    binary = raw_data.pop(Key.BINARY, None)
+    if binary is not None:
+        binary = Key.as_str(manager, binary)
 
-    binary = data[0]
-    srv_check = data[1]
+    srv_check = Key.as_bool(manager, raw_data.pop(Key.SRV_CHECK, "True"))
 
     # Prepare functions
     funcs = parse_data(
@@ -219,7 +212,7 @@ def get_function_from_dict(raw_data, manager=manager):
 
     # Create the functions
     for name, data in funcs:
-        function_dict[name] = self.pipe_function(*data)
+        function_dict[name] = manager.pipe_function(*data)
 
     return function_dict
 
@@ -239,18 +232,11 @@ def get_pointer_from_file(file, manager=manager):
 def get_pointer_from_dict(raw_data, manager=manager):
     pointer_dict = dict()
 
-    data = tuple(parse_data(
-        manager,
-        {0: dict((k, v) for k, v in raw_data.items() if not isinstance(
-            v, dict))},
-        (
-            (Key.BINARY, Key.as_str, None),
-            (Key.SRV_CHECK, Key.as_bool, True)
-        )
-    ))[0][1]
+    binary = raw_data.pop(Key.BINARY, None)
+    if binary is not None:
+        binary = Key.as_str(manager, binary)
 
-    binary = data[0]
-    srv_check = data[1]
+    srv_check = Key.as_bool(manager, raw_data.pop(Key.SRV_CHECK, "True"))
 
     # Prepare binary pointers
     ptrs = parse_data(
@@ -299,24 +285,23 @@ def get_type_from_file(file, manager=manager):
     return get_type_from_dict(GameConfigObj(file), manager)
 
 def get_type_from_dict(raw_data, manager=manager):
-    # Prepare general type information
-    data = tuple(parse_data(
-        manager,
-        # Discard all subkeys and add the new dict to a another dict to
-        # make it work with parse_data(). Okay, this can be improved...
-        {0: dict((k, v) for k, v in raw_data.items() if not isinstance(
-            v, dict))},
-        (
-            (Key.BINARY, Key.as_str, None),
-            (Key.SRV_CHECK, Key.as_bool, None),
-            (Key.SIZE, Key.as_int, None)
-        )
-    ))[0][1]
+    type_dict = dict()
 
-    type_dict = {k:v for k, v in zip(("_binary", "_srv_check", "_size"), data) if v is not None}
+    binary = raw_data.get(Key.BINARY, None)
+    if binary is not None:
+        binary = Key.as_str(manager, binary)
+        type_dict["_binary"] = binary
 
-    binary = type_dict.get("_binary", None)
-    srv_check = type_dict.get("_srv_check", True)
+    srv_check = raw_data.get(Key.SRV_CHECK, None)
+    if srv_check is not None:
+        srv_check = Key.as_bool(manager, srv_check)
+        type_dict["_srv_check"] = srv_check
+    else:
+        srv_check = True
+
+    size = raw_data.get(Key.SIZE, None)
+    if size is not None:
+        type_dict["_size"] = Key.as_int(manager, size)
 
     # Prepare pointer and instance attributes
     for method in (manager.instance_attribute, manager.pointer_attribute):
@@ -538,19 +523,11 @@ def get_data_from_file(file):
 def get_data_from_dict(raw_data):
     data_dict = dict()
 
-    data = tuple(parse_data(
-        manager,
-        {0: dict((k, v) for k, v in raw_data.items() if not isinstance(
-            v, dict))},
-        (
-            (Key.BINARY, Key.as_str, None),
-            (Key.SRV_CHECK, Key.as_bool, True)
-        )
-    ))[0][1]
+    binary = raw_data.get(Key.BINARY, None)
+    if binary is not None:
+        binary = Key.as_str(manager, binary)
 
-    binary = data[0]
-    srv_check = data[1]
-
+    srv_check = Key.as_bool(manager, raw_data.get(Key.SRV_CHECK, "True"))
 
     for method_name in (
             "instance_attribute",
@@ -679,9 +656,9 @@ def get_ctype_from_file(file, auto_dealloc=True):
     return get_ctype_from_dict(
         get_function_from_dict(GameConfigObj(file)), auto_dealloc=True)
 
-def get_ctype_from_dict(data, auto_dealloc=True):
+def get_ctype_from_dict(raw_data, auto_dealloc=True):
     ctype_dict = {}
-    for name, value in data.items():
+    for name, value in raw_data.items():
         if auto_dealloc:
             ctype_dict[name] = get_ctype_function(value)
         else:
@@ -691,15 +668,23 @@ def get_ctype_from_dict(data, auto_dealloc=True):
 
 def create_patchers_from_file(file):
     """Create patchers from a file."""
+    raw_data = GameConfigObj(file)
+
+    binary = raw_data.pop(Key.BINARY, None)
+    if binary is not None:
+        binary = Key.as_str(manager, binary)
+
+    srv_check = Key.as_bool(manager, raw_data.pop(Key.SRV_CHECK, "True"))
+
     # Parse patcher data
     patcher_data = parse_data(
         manager,
-        GameConfigObj(file), (
-            (Key.BINARY, Key.as_str, NO_DEFAULT),
+        raw_data, (
+            (Key.BINARY, Key.as_str, binary if binary is not None else NO_DEFAULT),
             (Key.IDENTIFIER, Key.as_identifier, NO_DEFAULT),
             (Key.OFFSET, Key.as_int, 0),
             (Key.LEVEL, Key.as_int, 0),
-            (Key.SRV_CHECK, Key.as_bool, True),
+            (Key.SRV_CHECK, Key.as_bool, srv_check),
             (Key.SIZE, Key.as_int, NO_DEFAULT),
             ("op_codes", Key.as_identifier, None),
         )
