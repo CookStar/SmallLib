@@ -22,9 +22,9 @@ from paths import CUSTOM_DATA_PATH
 #   Cvar Tools
 from cvartools import CvarChecker
 
-# Data Tools Imports
-#   Data Tools
-from datatools.ctypes import create_ctype_pipe_from_file
+# Memory Tools Imports
+#   Memory Tools
+from memorytools.manager import create_ctype_pipe_from_file
 
 
 # =============================================================================
@@ -39,7 +39,7 @@ __all__ = ("compress_file",
 # >> GLOBAL VARIABLES
 # =============================================================================
 _ctype_pipe = create_ctype_pipe_from_file(
-    CUSTOM_DATA_PATH / "downloadtools" / "data.ini",
+    CUSTOM_DATA_PATH / "downloadtools" / "function.ini",
     auto_dealloc=False
 )
 
