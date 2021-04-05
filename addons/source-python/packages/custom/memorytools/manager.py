@@ -375,7 +375,7 @@ def get_type_from_dict(raw_data, manager=manager):
     # Create the functions
     for name, data in funcs:
         ptr = find_binary(*data[:2]).find_address(data[2])
-        type_dict[name] = manager.function_pointer(ptr, *data[:3])
+        type_dict[name] = manager.function_pointer(ptr, *data[3:])
 
 
     # Via binary.
