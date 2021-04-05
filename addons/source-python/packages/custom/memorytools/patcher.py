@@ -19,11 +19,16 @@ from core import AutoUnload
 #   Memory
 from memory import Pointer
 
+# Memory Tools Imports
+#   Memory Tools
+from memorytools import get_jmp_bytes
+
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ("Patcher",
+__all__ = ("make_jmp",
+           "Patcher",
            "Patchers",
            )
 
@@ -173,4 +178,12 @@ class Patchers(MutableMapping):
             self.patch()
         else:
             self.reset()
+
+
+# =============================================================================
+# >> FUNCTIONS
+# =============================================================================
+def make_jmp(base, dest, short=True):
+    jmp_bytes = get_jmp_bytes(base, dest, short)
+    return Patcher(base, len(jmp_bytes), jmp_bytes)
 

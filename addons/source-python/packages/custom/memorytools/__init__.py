@@ -10,16 +10,23 @@
 from memory import find_binary
 from memory import BinaryFile
 from memory import Pointer
+from memory.helpers import Array
+from memory.manager import manager
 from memory.manager import Type
 
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ("get_offset",
+__all__ = ("get_jmp_address",
+           "get_jmp_bytes",
+           "get_jmp_short_address",
+           "get_offset",
            "get_pointer",
            "get_relative_pointer",
            "get_relative_pointer_from_pointer",
+           "mem_print",
+           "mem_write",
            )
 
 
@@ -83,4 +90,39 @@ def get_relative_pointer_from_pointer(pointer, offset, size=4):
     pointer += getattr(pointer, 'get_' + _singed_size_type[size])(offset)+offset+size
 
     return pointer
+
+def get_jmp_address(base, dest):
+    base_address = int(base)
+    dest_address = int(dest)
+
+    return ((dest_address - (base_address + 5)) & 0xFFFFFFFF)
+
+def get_jmp_short_address(base, dest):
+    base_address = int(base)
+    dest_address = int(dest)
+
+    relative_address = (dest_address - (base_address + 2))
+    if (relative_address and
+        relative_address <= 127 and
+        relative_address >= -128):
+        return (relative_address & 0xFF)
+
+    return None
+
+def get_jmp_bytes(base, dest, short=True):
+    if short:
+        jmp_address = get_jmp_short_address(base, dest)
+        if jmp_address is not None:
+            return b"\xeb"+((jmp_address).to_bytes(1, "little"))
+
+    return b"\xe9"+((get_jmp_address(base, dest)).to_bytes(4, "little"))
+
+def mem_print(pointer, length):
+    data = Array(manager, False, Type.UCHAR, pointer, length)
+    print(' '.join("{:02X}".format(i) for i in data))
+
+def mem_write(path, pointer, length):
+    data = Array(manager, False, Type.UCHAR, pointer, length)
+    with open(path, "wb") as file:
+        file.write(bytes([i for i in data]))
 
