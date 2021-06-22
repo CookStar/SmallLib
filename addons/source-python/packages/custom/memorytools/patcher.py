@@ -114,12 +114,20 @@ class Patcher(AutoUnload):
             return cls.get_no_op(size)
 
     def patch(self):
-        ctypes.memmove(self.pointer, self.op_codes, self.size)
-        self.patched = True
+        if not self.patched:
+            ctypes.memmove(self.pointer, self.op_codes, self.size)
+            self.patched = True
 
     def reset(self):
-        ctypes.memmove(self.pointer, self.original, self.size)
-        self.patched = False
+        if self.patched:
+            ctypes.memmove(self.pointer, self.original, self.size)
+            self.patched = False
+
+    def set(self, setting):
+        if setting:
+            self.patch()
+        else:
+            self.reset()
 
     def toggle(self):
         if not self.patched:
@@ -128,8 +136,7 @@ class Patcher(AutoUnload):
             self.reset()
 
     def _unload_instance(self):
-        if self.patched:
-            self.reset()
+        self.reset()
 
         del self._patched[id(self)]
 
@@ -168,6 +175,12 @@ class Patchers(MutableMapping):
         for patcher in self._patchers.values():
             patcher.reset()
         self.patched = False
+
+    def set(self, setting):
+        if setting:
+            self.patch()
+        else:
+            self.reset()
 
     def toggle(self):
         for patcher in self._patchers.values():
