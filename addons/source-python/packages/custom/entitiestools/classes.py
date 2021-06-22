@@ -36,7 +36,7 @@ from paths import CUSTOM_PACKAGES_PATH
 from paths import PLUGIN_PATH
 #   Listeners
 from listeners import on_entity_created_listener_manager
-from listeners import on_tick_listener_manager
+#from listeners import on_tick_listener_manager
 
 # Memory Tools Imports
 #   Memory Tools
