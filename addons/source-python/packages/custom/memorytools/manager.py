@@ -195,6 +195,20 @@ def get_function_from_dict(raw_data, manager=manager):
         ptr = get_relative_pointer(*data[:5])
         function_dict[name] = manager.pipe_function_pointer(ptr, *data[5:])
 
+    # Remove unnecessary items.
+    for method in ("instance_attribute",
+                   "pointer_attribute",
+                   "static_instance_array",
+                   "dynamic_instance_array",
+                   "static_pointer_array",
+                   "dynamic_pointer_array",
+                   "virtual_function",
+                   "binary_attribute",
+                   "binary_array",
+                   "binary_virtual_function",
+                   "binary_pointer"):
+        raw_data.pop(method, None)
+
     # Prepare functions
     funcs = parse_data(
         manager,
@@ -529,14 +543,13 @@ def get_data_from_dict(raw_data):
 
     srv_check = Key.as_bool(manager, raw_data.get(Key.SRV_CHECK, "True"))
 
-    for method_name in (
-            "instance_attribute",
-            "pointer_attribute",
-            "static_instance_array",
-            "dynamic_instance_array",
-            "static_pointer_array",
-            "dynamic_pointer_array",
-            "virtual_function"):
+    for method_name in ("instance_attribute",
+                        "pointer_attribute",
+                        "static_instance_array",
+                        "dynamic_instance_array",
+                        "static_pointer_array",
+                        "dynamic_pointer_array",
+                        "virtual_function"):
         offsets_data = parse_data(
             manager,
             raw_data.get(method_name, {}),
