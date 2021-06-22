@@ -32,6 +32,7 @@ from entities.entity import BaseEntity
 from entities.factories import factory_dictionary
 #   Paths
 from paths import CUSTOM_DATA_PATH
+from paths import CUSTOM_PACKAGES_PATH
 from paths import PLUGIN_PATH
 #   Listeners
 from listeners import on_entity_created_listener_manager
@@ -64,40 +65,44 @@ ENTITIES_DATA_PATH = Path(CUSTOM_DATA_PATH / "entities")
 # =============================================================================
 # >> FUNCTIONS
 # =============================================================================
+def get_caller_directory():
+    frame = currentframe().f_back.f_back
+
+    filename = frame.f_code.co_filename
+    path = Path(filename)
+
+    if filename.startswith(PLUGIN_PATH):
+        dir = path.relative_to(PLUGIN_PATH).parts[0]
+    elif filename.startswith(CUSTOM_PACKAGES_PATH):
+        dir = path.relative_to(CUSTOM_PACKAGES_PATH).parts[0]
+
+    return dir
+
 def get_entities_data(base_entity, dir=None):
-    if dir is not None:
-        path = ENTITIES_DATA_PATH / dir
-        if path.exists() and path.is_dir():
-            paths = [path]
-        else:
-            raise ValueError("Invalid data path: {path}".format(path=path))
-    else:
-        paths = [path for path in ENTITIES_DATA_PATH.iterdir() if path.is_dir()]
+    if dir is None:
+        dir = get_caller_directory()
+
+    path = ENTITIES_DATA_PATH / dir
 
     entity_data = dict()
     entity_server_classes = [server_class.__name__ for server_class in reversed(server_classes.get_entity_server_classes(base_entity))]
     for class_name in entity_server_classes:
         file_name = class_name + ".ini"
         entity_data.update(get_data_from_file(_managers_path / file_name))
-        for path in paths:
-            entity_data.update(get_data_from_file(str(path / file_name)))
+        entity_data.update(get_data_from_file(str(path / file_name)))
 
     return entity_data
 
 def load_entities_data(dir=None):
     if dir is None:
-        for data_path in ENTITIES_DATA_PATH.rglob("*.ini"):
-            parts = data_path.relative_to(ENTITIES_DATA_PATH).parts
-            path = ENTITIES_DATA_PATH / parts[0] / parts[-1]
-            class_name = path.stem
-            data_paths[class_name].add(str(path))
+        dir = get_caller_directory()
+
+    data_path = ENTITIES_DATA_PATH / dir
+    if data_path.exists() and data_path.is_dir():
+        for path in data_path.rglob("*.ini"):
+            data_paths[path.stem].add(str(data_path / path.name))
     else:
-        data_path = ENTITIES_DATA_PATH / dir
-        if data_path.exists() and data_path.is_dir():
-            for path in data_path.rglob("*.ini"):
-                data_paths[path.stem].add(str(data_path / path.name))
-        else:
-            raise ValueError("Invalid data path: {path}".format(path=data_path))
+        raise ValueError("Invalid data path: {path}".format(path=data_path))
 
     for classname in factory_dictionary:
         base_entity = BaseEntity.find(classname)
