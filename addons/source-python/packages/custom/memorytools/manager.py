@@ -26,6 +26,7 @@ from memorytools import get_offset
 from memorytools import get_pointer
 from memorytools import get_relative_pointer
 from memorytools.ctypes import get_ctype_function
+from memorytools.helpers import as_op_codes
 from memorytools.patcher import Patcher
 from memorytools.patcher import Patchers
 
@@ -699,7 +700,7 @@ def create_patchers_from_file(file):
             (Key.LEVEL, Key.as_int, 0),
             (Key.SRV_CHECK, Key.as_bool, srv_check),
             (Key.SIZE, Key.as_int, NO_DEFAULT),
-            ("op_codes", Key.as_identifier, None),
+            ("op_codes", as_op_codes, None),
         )
     )
 
