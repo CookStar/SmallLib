@@ -52,7 +52,7 @@ class Patcher(AutoUnload):
     ]
 
     def __init__(self, pointer, size, op_codes=None):
-        """Initialize the downloader.
+        """Initialize the patcher.
 
         :param Pointer/int pointer:
             The pointer or memory address to patch the memory.
