@@ -1,4 +1,4 @@
-# ../botstools/engines/csgo/__init__.py
+# ../addons/source-python/packages/custom/botstools/engines/csgo/__init__.py
 
 """Provides CS:GO specific Bot based functionality."""
 

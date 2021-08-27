@@ -1,4 +1,4 @@
-# ../botstools/_base.py
+# ../addons/source-python/packages/custom/botstools/_base.py
 
 """Provides a class used to interact with a specific bot."""
 

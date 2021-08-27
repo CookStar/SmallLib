@@ -9,6 +9,6 @@ To load entity data in a plugin/custom package, use entitiestools.load_entities_
     from entitiestools import load_entities_data
 
     # This will automatically load the directory with the plugin/custom package name
-    # e.g. (..addons/source-python/data/custom/entities/plugin_name)
+    # e.g. (../addons/source-python/data/custom/entities/plugin_name)
     # and make them accessible by Entity.
     load_entities_data()

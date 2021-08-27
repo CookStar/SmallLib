@@ -1,4 +1,4 @@
-# ../botstools/__init__.py
+# ../addons/source-python/packages/custom/botstools/__init__.py
 
 """Provides bot based functionality."""
 

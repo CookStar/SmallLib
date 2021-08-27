@@ -1,4 +1,4 @@
-# ../botstools/constants.py
+# ../addons/source-python/packages/custom/botstools/constants.py
 
 """Provides constant values that are bot based."""
 

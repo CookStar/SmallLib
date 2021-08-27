@@ -1,4 +1,4 @@
-# ../botstools/entity.py
+# ../addons/source-python/packages/custom/botstools/entity.py
 
 """Provides a class used to interact with a specific bot."""
 
