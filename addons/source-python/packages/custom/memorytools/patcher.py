@@ -123,8 +123,8 @@ class Patcher(AutoUnload):
             ctypes.memmove(self.pointer, self.original, self.size)
             self.patched = False
 
-    def set(self, setting):
-        if setting:
+    def set(self, state):
+        if state:
             self.patch()
         else:
             self.reset()
@@ -176,8 +176,8 @@ class Patchers(MutableMapping):
             patcher.reset()
         self.patched = False
 
-    def set(self, setting):
-        if setting:
+    def set(self, state):
+        if state:
             self.patch()
         else:
             self.reset()
