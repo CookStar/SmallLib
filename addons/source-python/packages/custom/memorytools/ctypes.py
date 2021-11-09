@@ -48,7 +48,7 @@ class Base_Ctypes(AutoUnload):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
 
         size = self.get_size(argtypes)
-        op_codes = self.make_asm(address, size, argtypes, restype)
+        op_codes = self.make_asm(int(address), size, argtypes, restype)
         op_codes_size = len(op_codes)
 
         self.memory = alloc(op_codes_size, auto_dealloc)
@@ -75,7 +75,7 @@ class Base_Ctypes(AutoUnload):
 class Ctypes_CDECL:
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.CFUNCTYPE(restype, *argtypes)
-        self.function = functype(address)
+        self.function = functype(int(address))
 
     def __call__(self, *args, **kwargs):
         return self.function(*args, **kwargs)
@@ -84,7 +84,7 @@ class Ctypes_CDECL:
 class Ctypes_STDCALL(Ctypes_CDECL):
     def __init__(self, address, argtypes, restype, auto_dealloc=True):
         functype = ctypes.WINFUNCTYPE(restype, *argtypes)
-        self.function = functype(address)
+        self.function = functype(int(address))
 
 
 class Ctypes_THISCALL(Base_Ctypes):
@@ -169,12 +169,30 @@ class Ctypes_FASTCALL_CALLER(Ctypes_FASTCALL):
         return bytes(op_codes)
 
 
+class Ctypes_DELPHI_MODIFIED(Base_Ctypes):
+
+    @staticmethod
+    def get_size(argtypes):
+        return 0
+
+    @staticmethod
+    def make_asm(address, size, argtypes, restype):
+        op_codes = []
+        op_codes.extend([0x8b, 0x44, 0x24, 0x04])           #   mov     eax, [esp+4]
+        op_codes.extend([0x8b, 0x54, 0x24, 0x08])           #   mov     edx, [esp+8]
+        op_codes.extend([0xb9])
+        op_codes.extend((address).to_bytes(4, "little"))    #   mov     ecx, address
+        op_codes.extend([0xff, 0xd1])                       #   call    ecx
+        op_codes.extend([0xc3])                             #   ret
+        return bytes(op_codes)
+
+
 # =============================================================================
 # >> FUNCTIONS
 # =============================================================================
 def get_ctype_function(function, calling_convention=None, auto_dealloc=True):
     address = function.trampoline.address if function.is_hooked() else function.address
-    argtypes = get_ctype_argtypes(function.arguments)
+    argtypes = get_ctype_argtypes(*function.arguments)
     restype = get_ctype_from_data_type(function.return_type)
 
     if calling_convention is None:
@@ -209,7 +227,7 @@ def get_ctype_calling_convention(calling_convention):
     except KeyError:
         raise ValueError("Given calling_convention is not supported.")
 
-def get_ctype_argtypes(argtypes):
+def get_ctype_argtypes(*argtypes):
     ctype_argtypes = list()
     for data_type in argtypes:
         ctype_argtypes.append(get_ctype_from_data_type(data_type))
