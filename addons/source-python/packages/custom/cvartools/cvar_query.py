@@ -41,11 +41,11 @@ class CvarQuery(WeakAutoUnload):
         if cookie not in CvarQuery._cvar_queries:
             return
 
+        cvar_query = CvarQuery._cvar_queries.pop(cookie)
+
         if status is not QueryCvarStatus.SUCCESS:
-            del CvarQuery._cvar_queries[cookie]
             return
 
-        cvar_query = CvarQuery._cvar_queries.pop(cookie)
         if (cvar_query.cvar_value is not None and
             cvar_value == str(cvar_query.cvar_value)):
             return
