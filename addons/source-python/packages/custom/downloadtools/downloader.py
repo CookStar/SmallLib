@@ -90,39 +90,57 @@ class Downloader:
         self.failed = list()
         self.receivers = dict()
 
-        for player in PlayerIter("human"):
-            net_channel = player.client.net_channel
+        for slot in range(server.client_count):
+            client = server.get_client(slot)
+            if not client.is_connected or client.is_fake_client:
+                continue
+            index = slot + 1
+            net_channel = client.net_channel
+
             for file in self.files:
                 if not net_channel.send_file(file, transfer_id):
-                    self.failed.append(player.index)
+                    self.failed.append(index)
                     break
                 transfer_id += 1
             else:
-                self.receivers[player.index] = ctypes.c_void_p(net_channel._ptr().address)
+                self.receivers[index] = (client.userid, ctypes.c_void_p(net_channel._ptr().address))
 
-        Delay(self.estimated_time, self.transfer_end, cancel_on_level_end=True)
+        self.delay = Delay(self.estimated_time - 1, self.transfer_end, cancel_on_level_end=True)
 
         self._downloader[id(self)] = self
 
     def transfer_end(self):
         sv_allowupload.update()
-        self.check_files()
+        self.delay = Delay(1, self.check_files, cancel_on_level_end=True)
 
     def check_files(self):
-        for index, net_channel in list(self.receivers.items()):
-            if not net_chan_is_file_in_waiting_list(net_channel, self.file):
-                if index not in sv_allowupload:
-                    self.success.append(index)
-                else:
-                    self.failed.append(index)
-                del self.receivers[index]
-            else:
-                break
-        else:
-            return self.callback(self, self.success, self.failed)
+        self.delay = None
 
-        if self.transfer_time >= self.time_limit:
-            for index, net_channel in self.receivers.items():
+        if self.transfer_time < self.time_limit:
+            for index, value in list(self.receivers.items()):
+                userid, net_channel = value
+                client = server.get_client(index - 1)
+                if not client.is_connected or client.userid != userid:
+                    del self.receivers[index]
+                    continue
+
+                if not net_chan_is_file_in_waiting_list(net_channel, self.file):
+                    if index not in sv_allowupload:
+                        self.success.append(index)
+                    else:
+                        self.failed.append(index)
+                    del self.receivers[index]
+                else:
+                    break
+            else:
+                return self.callback(self, self.success, self.failed)
+
+        else:
+            for index, value in self.receivers.items():
+                userid, net_channel = value
+                client = server.get_client(index - 1)
+                if not client.is_connected or client.userid != userid:
+                    continue
                 if (not net_chan_is_file_in_waiting_list(net_channel, self.file) and
                     index not in sv_allowupload):
                     self.success.append(index)
@@ -132,15 +150,15 @@ class Downloader:
             return self.callback(self, self.success, self.failed)
 
         self.transfer_time += 1
-        Delay(1, self.check_files, cancel_on_level_end=True)
+        self.delay = Delay(1, self.check_files, cancel_on_level_end=True)
 
     @OnClientDisconnect
     def on_client_disconnect(index):
         for downloader in Downloader._downloader.values():
-            if downloader.receivers:
-                if downloader.receivers.pop(index, None) is None:
-                    if index in downloader.success:
-                        downloader.success.remove(index)
-                    elif index in downloader.failed:
-                        downloader.failed.remove(index)
+            receivers = downloader.receivers
+            if receivers and receivers.pop(index, None) is None:
+                if index in downloader.success:
+                    downloader.success.remove(index)
+                elif index in downloader.failed:
+                    downloader.failed.remove(index)
 

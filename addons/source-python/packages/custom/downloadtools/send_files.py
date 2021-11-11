@@ -80,15 +80,20 @@ class SendFiles:
         self.transfer_time = self.estimated_time
         self.time_limit = self.estimated_time*time_multiplier
 
-        net_channel = Player(index).client.net_channel
-        for file in self.files:
-            if not net_channel.send_file(file, transfer_id):
-                self.delay = Delay(0.1, self.transfer_error, cancel_on_level_end=True)
-                break
-            transfer_id += 1
+        client = server.get_client(index - 1)
+        self.userid = client.userid
+        net_channel = client.net_channel
+        if not client.is_connected or client.is_fake_client:
+            self.delay = Delay(0.1, self.transfer_error, cancel_on_level_end=True)
         else:
-            self.net_channel = ctypes.c_void_p(net_channel._ptr().address)
-            self.delay = Delay(self.estimated_time, self.transfer_end, cancel_on_level_end=True)
+            for file in self.files:
+                if not net_channel.send_file(file, transfer_id):
+                    self.delay = Delay(0.1, self.transfer_error, cancel_on_level_end=True)
+                    break
+                transfer_id += 1
+            else:
+                self.net_channel = ctypes.c_void_p(net_channel._ptr().address)
+                self.delay = Delay(self.estimated_time, self.transfer_end, cancel_on_level_end=True)
 
         self._send_files[id(self)] = self
 
@@ -102,6 +107,10 @@ class SendFiles:
 
     def check_files(self):
         self.delay = None
+
+        client = server.get_client(self.index - 1)
+        if not client.is_connected or client.userid != self.userid:
+            return self.callback(self, False)
 
         if not net_chan_is_file_in_waiting_list(
             self.net_channel, self.file):
@@ -119,9 +128,9 @@ class SendFiles:
     @OnClientDisconnect
     def on_client_disconnect(index):
         for send_files in SendFiles._send_files.values():
-            if (send_files.index == index and
-                send_files.delay is not None):
-                if send_files.delay.running:
-                    send_files.delay.cancel()
+            if send_files.index == index:
+                delay = send_files.delay
+                if delay is not None and delay.running:
+                    delay.cancel()
                 send_files.delay = None
 
