@@ -687,11 +687,18 @@ def create_patchers_from_file(file):
             (Key.SRV_CHECK, Key.as_bool, srv_check),
             (Key.SIZE, Key.as_int, NO_DEFAULT),
             ("op_codes", as_op_codes, None),
+            ("base_op_codes", as_op_codes, None),
         )
     )
 
     # Create the patchers
-    return Patchers({
-        name:Patcher(get_pointer(*data[:5]), *data[5:]) for name, data in patcher_data
-    })
+    patchers = Patchers()
+    for name, data in patcher_data:
+        try:
+            patchers[name] = Patcher(get_pointer(*data[:5]), *data[5:])
+        except (TypeError, ValueError):
+            print(f"An exception was raised on '{name}'")
+            raise
+
+    return patchers
 

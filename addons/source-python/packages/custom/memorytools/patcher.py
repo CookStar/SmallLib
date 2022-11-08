@@ -9,13 +9,15 @@
 #   Collections
 from collections.abc import MutableMapping
 #   Ctypes
-import ctypes
+from ctypes import c_ubyte
+from ctypes import c_void_p
+from ctypes import memmove
 #   Weakref
 from weakref import WeakValueDictionary
 
 # Source.Python Imports
 #   Core
-from core import AutoUnload
+from core import WeakAutoUnload
 #   Memory
 from memory import Pointer
 
@@ -36,8 +38,8 @@ __all__ = ("make_jmp",
 # =============================================================================
 # >> CLASSES
 # =============================================================================
-class Patcher(AutoUnload):
-    _patched = WeakValueDictionary()
+class Patcher(WeakAutoUnload):
+    _patchers = dict()
 
     no_op_codes = [
         b"\x90",
@@ -51,7 +53,7 @@ class Patcher(AutoUnload):
         b"\x66\x0f\x1f\x84\x00\x00\x00\x00\x00",
     ]
 
-    def __init__(self, pointer, size, op_codes=None):
+    def __init__(self, pointer, size, op_codes=None, base_op_codes=None):
         """Initialize the patcher.
 
         :param Pointer/int pointer:
@@ -60,42 +62,67 @@ class Patcher(AutoUnload):
             The size of the memory to be patched.
         :param bytes op_codes:
             A specific op-codes to patch the memory.
+        :param bytes base_op_codes:
+            Base op-codes used for verification to prevent crashes
+            when binary has been changed.
         :raise TypeError:
             Raised if ``pointer`` is not Pointer or int.
         :raise ValueError:
-            Raised if the patcher is overlapping with
-            another patcher's memory space.
+            Raised if the patcher is overlapping with another patcher's
+            memory space or ``base_op_codes`` does not match the original
+            op-codes or ``op_codes`` and ``base_op_codes`` exceed ``size``.
         """
+        self._patchable = False
 
         if not isinstance(pointer, (Pointer, int)):
             raise TypeError("pointer type is not Pointer/int: {type}".format(type=repr(type(pointer))))
 
-        self.address = int(pointer)
-        self.size = size
+        if op_codes is not None and len(op_codes) > size:
+            op_codes = ' '.join("{:02X}".format(i) for i in op_codes)
+            raise ValueError(f"Length of op_codes exceeds the patch size:\n    size '{size}'\n    op_codes '{op_codes}'")
 
-        for patched in self._patched.values():
-            if (self.address <= patched.address):
-                small_address = self.address + self.size
-                large_address = patched.address
+        if base_op_codes is not None and len(base_op_codes) > size:
+            base_op_codes = ' '.join("{:02X}".format(i) for i in base_op_codes)
+            raise ValueError(f"Length of base_op_codes exceeds the patch size:\n    size '{size}'\n    base_op_codes '{base_op_codes}'")
+
+        address = int(pointer)
+
+        for patcher in self._patchers.values():
+            if (address <= patcher.address):
+                small_address = address + size
+                large_address = patcher.address
             else:
-                small_address = patched.address + patched.size
-                large_address = self.address
+                small_address = patcher.address + patcher.size
+                large_address = address
 
             if small_address > large_address:
-                patched_address = hex(patched.address)
-                patched_original = ' '.join("{:02X}".format(i) for i in patched.original)
-                patched_op_codes = ' '.join("{:02X}".format(i) for i in patched.op_codes)
-                raise ValueError(f"Patcher's memory space is overlapping!:\n    address '{patched_address}'\n    original '{patched_original}'\n    op_codes '{patched_op_codes}'")
+                patcher_address = hex(patcher.address)
+                patcher_original = ' '.join("{:02X}".format(i) for i in patcher.original)
+                patcher_op_codes = ' '.join("{:02X}".format(i) for i in patcher.op_codes)
+                raise ValueError(f"Patcher's memory space is overlapping:\n    address '{patcher_address}'\n    original '{patcher_original}'\n    op_codes '{patcher_op_codes}'")
 
-        Pointer(self.address).unprotect(self.size)
+        original = bytes((c_ubyte*size).from_address(address))
 
-        self.pointer = ctypes.c_void_p(self.address)
-        self.original = bytes((ctypes.c_ubyte*self.size).from_address(self.address))
-        self.op_codes = self.get_opcodes(op_codes, self.size)
+        if base_op_codes is not None:
+            original_op_codes = original[:len(base_op_codes)]
+            for base_byte, original_byte, in zip(base_op_codes, original_op_codes):
+                if base_byte != 0x2A and base_byte != original_byte:
+                    original_op_codes = ' '.join("{:02X}".format(i) for i in original_op_codes)
+                    base_op_codes = ' '.join("{:02X}".format(i) for i in base_op_codes).replace("2A", "??")
+                    raise ValueError(f"Original op-codes does not match base_op_codes:\n    original '{original_op_codes}'\n    base     '{base_op_codes}'")
+
+        Pointer(address).unprotect(size)
+
+        self.address = address
+        self.size = size
+        self.pointer = c_void_p(address)
+        self.original = original
+        self.op_codes = self.get_op_codes(op_codes, size)
 
         self.patched = False
+        self._patchable = True
 
-        self._patched[id(self)] = self
+        self._patchers[id(self)] = self
 
     @classmethod
     def get_no_op(cls, size):
@@ -107,20 +134,20 @@ class Patcher(AutoUnload):
         return (cls.no_op_codes[-1]*quot if quot else b"")+(cls.no_op_codes[rem-1] if rem else b"")
 
     @classmethod
-    def get_opcodes(cls, op_codes, size):
+    def get_op_codes(cls, op_codes, size):
         if op_codes is not None:
             return op_codes[:size]+cls.get_no_op(size-len(op_codes))
         else:
             return cls.get_no_op(size)
 
     def patch(self):
-        if not self.patched:
-            ctypes.memmove(self.pointer, self.op_codes, self.size)
+        if not self.patched and self._patchable:
+            memmove(self.pointer, self.op_codes, self.size)
             self.patched = True
 
     def reset(self):
-        if self.patched:
-            ctypes.memmove(self.pointer, self.original, self.size)
+        if self.patched and self._patchable:
+            memmove(self.pointer, self.original, self.size)
             self.patched = False
 
     def set(self, state):
@@ -136,9 +163,11 @@ class Patcher(AutoUnload):
             self.reset()
 
     def _unload_instance(self):
-        self.reset()
+        if self._patchable:
+            self.reset()
+            self._patchable = False
 
-        del self._patched[id(self)]
+            del self._patchers[id(self)]
 
 
 class Patchers(MutableMapping):
