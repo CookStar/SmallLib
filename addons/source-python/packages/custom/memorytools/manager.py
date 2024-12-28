@@ -312,7 +312,8 @@ def get_type_from_dict(raw_data, manager=manager):
             (
                 (Key.TYPE_NAME, Key.as_attribute_type, NO_DEFAULT),
                 (Key.OFFSET, Key.as_int, NO_DEFAULT),
-                (Key.DOC, Key.as_str, None)
+                (Key.DOC, Key.as_str, None),
+                (Key.LENGTH, Key.as_int, 0)
             )
         )
 
