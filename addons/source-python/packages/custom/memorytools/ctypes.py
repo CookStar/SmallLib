@@ -123,12 +123,12 @@ class Ctypes_FASTCALL(Base_Ctypes):
         for index, argtype in enumerate(argtypes):
             sizeof_argtype = ctypes.sizeof(argtype)
 
-            if index == 1:
+            if index == 0:
                 if sizeof_argtype > 4:
                     skip = False
                 continue
 
-            if index == 2 and skip:
+            if index == 1 and skip:
                 continue
 
             if sizeof_argtype >= 4:
